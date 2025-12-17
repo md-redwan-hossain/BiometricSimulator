@@ -1,0 +1,56 @@
+@{
+  ViewData["Title"] = "Registration";
+}
+
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-5 col-md-7">
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-gradient text-white text-center py-4"
+          style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+          <h2 class="mb-0 fw-bold">
+            <i class="bi bi-person-plus-fill me-2"></i>Employee Registration
+          </h2>
+        </div>
+        <div class="card-body p-5">
+          <form asp-action="RegisterEmployee" method="post">
+            <div class="mb-4">
+              <label for="ProxyCode" class="form-label fw-semibold text-dark">Unique Proxy Code</label>
+              <input type="text" class="form-control form-control-lg" id="ProxyCode" name="ProxyCode"
+                placeholder="Enter unique proxy code" required maxlength="30">
+            </div>
+
+            <div class="d-grid gap-2 mb-3">
+              <button type="submit" class="btn btn-lg text-white fw-semibold py-3"
+                style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <i class="bi bi-check-circle me-2"></i>Register Employee
+              </button>
+            </div>
+          </form>
+
+          <div class="d-grid">
+            <a asp-action="BioPunchSimulate" class="btn btn-outline-secondary btn-lg">
+              <i class="bi bi-arrow-left me-2"></i>Back to Punch
+            </a>
+          </div>
+
+          @if (TempData["SuccessMessage"] != null)
+          {
+            <div class="alert alert-success alert-dismissible fade show mt-4" role="alert">
+              <i class="bi bi-check-circle-fill me-2"></i>@TempData["SuccessMessage"]
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          }
+
+          @if (TempData["ErrorMessage"] != null)
+          {
+            <div class="alert alert-danger alert-dismissible fade show mt-4" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>@TempData["ErrorMessage"]
+              <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
