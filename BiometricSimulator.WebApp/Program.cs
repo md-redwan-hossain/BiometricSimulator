@@ -29,7 +29,8 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
         name: "default",
-        pattern: "{controller=Home}/{action=BioPunchSimulate}/{id?}")
+        pattern: "{action=BioPunchSimulate}/{id?}",
+        defaults: new { controller = "Home" })
     .WithStaticAssets();
 
 
