@@ -7,7 +7,7 @@
     <div class="col-lg-5 col-md-7">
       <div class="card shadow-lg border-0">
         <div class="card-header bg-gradient text-white text-center py-4"
-          style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
           <h2 class="mb-0 fw-bold">
             <i class="bi bi-fingerprint me-2"></i>Bio-Punch Simulate
           </h2>
@@ -24,13 +24,13 @@
             <div class="mb-4">
               <label for="Timestamp" class="form-label fw-semibold text-dark">Date & Time</label>
               <input type="text" class="form-control form-control-lg" id="Timestamp" name="Timestamp"
-                placeholder="Select date and time" required readonly>
+                     placeholder="Select date and time" required readonly>
               <input type="hidden" id="TimestampHidden" name="Timestamp">
             </div>
 
             <div class="d-grid gap-2 mb-3">
               <button type="submit" class="btn btn-lg text-white fw-semibold py-3"
-                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                      style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                 <i class="bi bi-check-circle me-2"></i>Punch In
               </button>
             </div>
@@ -52,40 +52,40 @@
     $(document).ready(function () {
       // Show success or error messages with SweetAlert2
       @if (TempData["SuccessMessage"] != null)
-        {
-          <text>
-            Swal.fire({
-              icon: 'success',
+      {
+        <text>
+          Swal.fire({
+            icon: 'success',
             title: 'Success!',
             text: '@TempData["SuccessMessage"]',
             confirmButtonColor: '#667eea',
             timer: 3000,
             timerProgressBar: true
-            });
-          </text>
+          });
+        </text>
       }
 
-        @if (TempData["ErrorMessage"] != null)
-        {
-          <text>
-            Swal.fire({
-              icon: 'error',
+      @if (TempData["ErrorMessage"] != null)
+      {
+        <text>
+          Swal.fire({
+            icon: 'error',
             title: 'Error!',
             text: '@TempData["ErrorMessage"]',
             confirmButtonColor: '#f5576c'
-            });
-          </text>
+          });
+        </text>
       }
 
-        // Initialize Flatpickr with 12-hour format
-        flatpickr('#Timestamp', {
-          enableTime: true,
-          altInput: true,
-          altFormat: "M j, Y h:i K",
-          dateFormat: 'Z',
-          time_24hr: false,
-          defaultDate: new Date(),
-        });
+      // Initialize Flatpickr with 12-hour format
+      flatpickr('#Timestamp', {
+        enableTime: true,
+        altInput: true,
+        altFormat: "M j, Y h:i K",
+        dateFormat: 'Z',
+        time_24hr: false,
+        defaultDate: new Date(),
+      });
 
       // Initialize Choices.js
       const element = document.getElementById('EmployeeId');
@@ -96,7 +96,8 @@
         itemSelectText: '',
         shouldSort: false,
         noResultsText: 'No data found',
-        noChoicesText: 'No data available'
+        noChoicesText: 'No data available',
+        loadingText: 'Loading...'
       });
 
       let isLoaded = false;
@@ -110,6 +111,24 @@
       });
 
       function loadProxyCodes() {
+        // Get the search input element
+        const searchInput = element.closest('.choices').querySelector('.choices__input');
+
+        // Disable search input and show loading state
+        if (searchInput) {
+          searchInput.disabled = true;
+          searchInput.placeholder = 'Loading...';
+        }
+
+        // Show loading message in dropdown
+        choices.setChoices([
+          {
+            value: '',
+            label: 'Loading employees...',
+            disabled: true
+          }
+        ], 'value', 'label', true);
+
         $.ajax({
           url: '@Url.Action("GetEmployees", "Home")',
           type: 'GET',
@@ -122,11 +141,37 @@
                 };
               });
 
+              // Replace loading message with actual data
               choices.setChoices(choicesData, 'value', 'label', true);
+            } else {
+              // No data found
+              choices.setChoices([
+                {
+                  value: '',
+                  label: 'No employees found',
+                  disabled: true
+                }
+              ], 'value', 'label', true);
             }
           },
           error: function () {
             console.error('Failed to load proxy codes');
+
+            // Show error state
+            choices.setChoices([
+              {
+                value: '',
+                label: 'Failed to load employees. Please try again.',
+                disabled: true
+              }
+            ], 'value', 'label', true);
+          },
+          complete: function () {
+            // Re-enable search input after loading (success or error)
+            if (searchInput) {
+              searchInput.disabled = false;
+              searchInput.placeholder = 'Type to search...';
+            }
           }
         });
       }
