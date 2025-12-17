@@ -17,8 +17,8 @@ public class ActivityController : ControllerBase
         _context = context;
     }
 
-    [HttpGet("unprocessed")]
-    public async Task<ActionResult<IEnumerable<UnprocessedActivityDto>>> GetUnprocessedActivities()
+    [HttpGet("pending")]
+    public async Task<IActionResult> GetUnprocessedActivities()
     {
         var unprocessedActivities = await (from activityLog in _context.ActivityLogs
                 join employee in _context.Employees
@@ -27,14 +27,26 @@ public class ActivityController : ControllerBase
                 select new UnprocessedActivityDto
                 {
                     ProxyCode = employee.ProxyCode,
-                    Timestamp = activityLog.Timestamp
+                    Timestamp = activityLog.Timestamp,
+                    Id = activityLog.Id
                 })
             .ToListAsync();
 
         return Ok(unprocessedActivities);
     }
 
-    [HttpPost("punch")]
+    [HttpPost("mark-as-processed")]
+    public async Task<ActionResult<IEnumerable<UnprocessedActivityDto>>> MarkProcessedActivities(
+        [FromBody] HashSet<int> ids)
+    {
+        var count = await _context.ActivityLogs.Where(x => ids.Contains(x.Id) && !x.IsProcessed)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(genericPlan => genericPlan.IsProcessed, true));
+
+        return count > 0 ? Ok() : BadRequest("No activities processed");
+    }
+
+    [HttpPost("")]
     public async Task<ActionResult<ActivityLog>> RecordPunch([FromBody] PunchDto dto)
     {
         // Validate employee exists

@@ -2,6 +2,7 @@ namespace BiometricSimulator.WebApp.Models;
 
 public class UnprocessedActivityDto
 {
-  public string ProxyCode { get; set; } = string.Empty;
-  public DateTime Timestamp { get; set; }
+  public required int Id { get; set; } 
+  public required string ProxyCode { get; set; } 
+  public required DateTime Timestamp { get; set; }
 }
