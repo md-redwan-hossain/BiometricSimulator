@@ -69,17 +69,11 @@
       // Initialize Flatpickr with 12-hour format
       flatpickr('#Timestamp', {
         enableTime: true,
-        dateFormat: 'Y-m-d h:i K',
+        altInput: true,
+        altFormat: "M j, Y h:i K",
+        dateFormat: 'Z',
         time_24hr: false,
         defaultDate: new Date(),
-        onChange: function (selectedDates, dateStr, instance) {
-          // Convert to ISO format for server submission
-          if (selectedDates.length > 0) {
-            const date = selectedDates[0];
-            const isoString = date.toISOString().slice(0, 16);
-            $('#TimestampHidden').val(isoString);
-          }
-        }
       });
 
       // Initialize Choices.js
