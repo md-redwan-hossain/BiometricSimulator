@@ -7,30 +7,36 @@
     <div class="col-lg-5 col-md-7">
       <div class="card shadow-lg border-0">
         <div class="card-header bg-gradient text-white text-center py-4"
-             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+          style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
           <h2 class="mb-0 fw-bold">
             <i class="bi bi-fingerprint me-2"></i>Bio-Punch Simulate
           </h2>
         </div>
         <div class="card-body p-5">
-          <form asp-action="RecordPunch" method="post">
+          <form asp-action="RecordPunch" method="post" id="punchForm">
             <div class="mb-4">
-              <label for="EmployeeId" class="form-label fw-semibold text-dark">Proxy Code</label>
-              <select class="form-select form-select-lg" id="EmployeeId" name="EmployeeId" required>
-
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <label for="EmployeeId" class="form-label fw-semibold text-dark mb-0">Proxy Code</label>
+                <button type="button" id="refreshBtn" class="btn btn-sm btn-outline-secondary"
+                  title="Refresh proxy codes">
+                  <i class="bi bi-arrow-clockwise"></i> Refresh
+                </button>
+              </div>
+              <select class="form-select form-select-lg" id="EmployeeId" name="EmployeeId" required disabled>
+                <option value="">Loading...</option>
               </select>
             </div>
 
             <div class="mb-4">
               <label for="Timestamp" class="form-label fw-semibold text-dark">Date & Time</label>
               <input type="text" class="form-control form-control-lg" id="Timestamp" name="Timestamp"
-                     placeholder="Select date and time" required readonly>
+                placeholder="Select date and time" required readonly>
               <input type="hidden" id="TimestampHidden" name="Timestamp">
             </div>
 
             <div class="d-grid gap-2 mb-3">
-              <button type="submit" class="btn btn-lg text-white fw-semibold py-3"
-                      style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+              <button type="submit" id="submitBtn" class="btn btn-lg text-white fw-semibold py-3" disabled
+                style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                 <i class="bi bi-check-circle me-2"></i>Punch In
               </button>
             </div>
@@ -52,40 +58,40 @@
     $(document).ready(function () {
       // Show success or error messages with SweetAlert2
       @if (TempData["SuccessMessage"] != null)
-      {
-        <text>
-          Swal.fire({
-            icon: 'success',
+        {
+          <text>
+            Swal.fire({
+              icon: 'success',
             title: 'Success!',
             text: '@TempData["SuccessMessage"]',
             confirmButtonColor: '#667eea',
             timer: 3000,
             timerProgressBar: true
-          });
-        </text>
+                      });
+          </text>
       }
 
-      @if (TempData["ErrorMessage"] != null)
-      {
-        <text>
-          Swal.fire({
-            icon: 'error',
+        @if (TempData["ErrorMessage"] != null)
+        {
+          <text>
+            Swal.fire({
+              icon: 'error',
             title: 'Error!',
             text: '@TempData["ErrorMessage"]',
             confirmButtonColor: '#f5576c'
-          });
-        </text>
+                      });
+          </text>
       }
 
-      // Initialize Flatpickr with 12-hour format
-      flatpickr('#Timestamp', {
-        enableTime: true,
-        altInput: true,
-        altFormat: "M j, Y h:i K",
-        dateFormat: 'Z',
-        time_24hr: false,
-        defaultDate: new Date(),
-      });
+        // Initialize Flatpickr with 12-hour format
+        flatpickr('#Timestamp', {
+          enableTime: true,
+          altInput: true,
+          altFormat: "M j, Y h:i K",
+          dateFormat: 'Z',
+          time_24hr: false,
+          defaultDate: new Date(),
+        });
 
       // Initialize Choices.js
       const element = document.getElementById('EmployeeId');
@@ -100,78 +106,154 @@
         loadingText: 'Loading...'
       });
 
-      let isLoaded = false;
+      // Form validation
+      const punchForm = document.getElementById('punchForm');
+      const submitBtn = document.getElementById('submitBtn');
 
-      // Load proxy codes only when dropdown is opened
-      element.addEventListener('showDropdown', function () {
-        if (!isLoaded) {
-          loadProxyCodes();
-          isLoaded = true;
+      function tryEnable() {
+        const selectedValue = element.value;
+        if (selectedValue && selectedValue !== '') {
+          submitBtn.disabled = false;
+        } else {
+          submitBtn.disabled = true;
+        }
+      }
+
+      // Listen for changes on the select element to enable/disable submit button
+      element.addEventListener('change', function () {
+        tryEnable()
+      });
+
+      punchForm.addEventListener('submit', function (e) {
+        const selectedValue = element.value;
+        if (!selectedValue || selectedValue === '') {
+          e.preventDefault();
+          Swal.fire({
+            icon: 'warning',
+            title: 'Validation Error',
+            text: 'Please select a proxy code before submitting.',
+            confirmButtonColor: '#667eea'
+          });
+          return false;
         }
       });
 
-      function loadProxyCodes() {
-        // Get the search input element
-        const searchInput = element.closest('.choices').querySelector('.choices__input');
+      let isLoading = false;
+      const refreshBtn = document.getElementById('refreshBtn');
 
-        // Disable search input and show loading state
+      // Refresh button click handler
+      refreshBtn.addEventListener('click', function () {
+        if (!isLoading) {
+          loadProxyCodes();
+        }
+      });
+
+      // Load proxy codes automatically on page load
+      loadProxyCodes();
+
+      function loadProxyCodes() {
+        isLoading = true;
+        submitBtn.disabled = true;
+
+        // Disable dropdown completely
+        choices.disable();
+        element.disabled = true;
+
+        // Disable and show loading on refresh button
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Loading...';
+
+        // Disable search during loading
+        choices.config.searchEnabled = false;
+
+        // Get the search input element and disable it
+        const choicesContainer = element.closest('.choices');
+        const searchInput = choicesContainer.querySelector('.choices__input--cloned');
+
         if (searchInput) {
           searchInput.disabled = true;
           searchInput.placeholder = 'Loading...';
         }
 
-        // Show loading message in dropdown
+        // Remove existing choices (except placeholder) and show loading message
+        choices.removeActiveItems();
+        choices.clearChoices();
         choices.setChoices([
           {
             value: '',
             label: 'Loading employees...',
-            disabled: true
+            disabled: true,
+            selected: false
           }
-        ], 'value', 'label', true);
+        ], 'value', 'label', false);
 
         $.ajax({
           url: '@Url.Action("GetEmployees", "Home")',
           type: 'GET',
           success: function (employees) {
+            // Clear all choices
+            choices.clearChoices();
+            tryEnable();
+
+            // Always add placeholder first
+            choices.setChoices([
+              {
+                value: '',
+                label: '-- Select Proxy Code --',
+                placeholder: true,
+                selected: true
+              }
+            ], 'value', 'label', false);
+
             if (employees && employees.length > 0) {
               const choicesData = employees.map(function (employee) {
                 return {
                   value: employee.id.toString(),
-                  label: employee.proxyCode
+                  label: employee.proxyCode,
+                  selected: false
                 };
               });
 
-              // Replace loading message with actual data
-              choices.setChoices(choicesData, 'value', 'label', true);
+              // Add employee choices
+              choices.setChoices(choicesData, 'value', 'label', false);
             } else {
-              // No data found
-              choices.setChoices([
-                {
-                  value: '',
-                  label: 'No employees found',
-                  disabled: true
-                }
-              ], 'value', 'label', true);
+              // No data found - only show placeholder
+              console.log('No employees found');
             }
           },
           error: function () {
             console.error('Failed to load proxy codes');
 
-            // Show error state
+            // Clear and show error state
+            choices.clearChoices();
             choices.setChoices([
               {
                 value: '',
                 label: 'Failed to load employees. Please try again.',
-                disabled: true
+                disabled: true,
+                selected: false
               }
-            ], 'value', 'label', true);
+            ], 'value', 'label', false);
           },
           complete: function () {
-            // Re-enable search input after loading (success or error)
+            isLoading = false;
+
+            // Re-enable dropdown
+            element.disabled = false;
+            choices.enable();
+
+            // Re-enable search after loading
+            choices.config.searchEnabled = true;
+
+            // Re-enable search input
             if (searchInput) {
               searchInput.disabled = false;
-              searchInput.placeholder = 'Type to search...';
+              searchInput.placeholder = 'Search proxy code...';
             }
+
+            // Re-enable refresh button
+            refreshBtn.disabled = false;
+            refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Refresh';
           }
         });
       }
