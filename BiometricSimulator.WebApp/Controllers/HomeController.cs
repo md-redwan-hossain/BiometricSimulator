@@ -57,6 +57,11 @@ public class HomeController : Controller
         return View();
     }
 
+    public IActionResult PendingActivities()
+    {
+        return View();
+    }
+
     [HttpPost]
     public async Task<IActionResult> RecordPunch(int employeeId, DateTime timestamp)
     {

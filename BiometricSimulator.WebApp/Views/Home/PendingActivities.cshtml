@@ -1,0 +1,115 @@
+@{
+  ViewData["Title"] = "Pending Activities";
+}
+
+<div class="container-fluid py-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-lg border-0">
+        <div class="card-header bg-gradient text-center py-4"
+             style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+          <h2 class="mb-0 fw-bold text-white">
+            <i class="bi bi-clock-history me-2"></i>Pending Activities
+          </h2>
+        </div>
+        <div class="card-body p-4">
+          <div class="mb-3 d-flex justify-content-between align-items-center">
+            <a asp-action="BioPunchSimulate" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left me-2"></i>Back to Punch
+            </a>
+            <div class="d-flex gap-2">
+              <button id="prevBtn" class="btn btn-primary" disabled>
+                Previous
+              </button>
+              <button id="nextBtn" class="btn btn-primary" disabled>
+                Next
+              </button>
+              <button id="refreshBtn" class="btn btn-primary">
+                Refresh
+              </button>
+            </div>
+          </div>
+          <div id="pending-activities-table"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+  <link href="https://unpkg.com/tabulator-tables@6.3.0/dist/css/tabulator_bootstrap5.min.css" rel="stylesheet">
+  <script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.3.0/dist/js/tabulator.min.js"></script>
+
+  <script>
+    $(document).ready(function () {
+      let isForward = true;
+      const pageSize = 5;
+      let lastResponse = null;
+      let cursor = null;
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const refreshBtn = document.getElementById('refreshBtn');
+
+      // Initialize Tabulator
+      const table = new Tabulator("#pending-activities-table", {
+        layout: "fitColumns",
+        columns: [
+          {
+            title: "Proxy Code",
+            field: "proxyCode",
+            hozAlign: "left",
+            headerHozAlign: "center"
+          },
+          {
+            title: "Timestamp",
+            field: "timestamp",
+            hozAlign: "center",
+            headerHozAlign: "center",
+          },
+        ],
+        placeholder: "No Pending Activities",
+        height: "500px",
+        ajaxURL: "@Url.Action("GetUnprocessedActivities", "Activity")",
+        ajaxConfig: "GET",
+        ajaxParams: function () {
+          const p = {
+            forward: isForward,
+            limit: pageSize
+          };
+
+          if (cursor !== null) {
+            Object.assign(p, {cursor: cursor});
+          } else {
+            delete p["cursor"];
+          }
+
+          return p;
+        },
+        ajaxResponse: function (url, params, response) {
+          lastResponse = response;
+          debugger
+          nextBtn.enabled = lastResponse?.hasNext ?? false;
+          prevBtn.enabled = lastResponse?.hasPrevious ?? false;
+          return response?.payload ?? [];
+        },
+      });
+
+
+      nextBtn.addEventListener('click', function () {
+        cursor = lastResponse?.nextCursor ?? null;
+        table.replaceData();
+      });
+
+
+      prevBtn.addEventListener('click', function () {
+        cursor = lastResponse?.previousCursor ?? null;
+        table.replaceData();
+      });
+
+      refreshBtn.addEventListener('click', function () {
+        table.replaceData();
+      });
+
+    });
+  </script>
+}
