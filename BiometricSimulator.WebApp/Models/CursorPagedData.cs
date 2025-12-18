@@ -1,35 +1,28 @@
 namespace BiometricSimulator.WebApp.Models;
 
-public record CursorPagedData<TData, TCursor>
+public record CursorPagedData<TData, TCursor>(ICollection<TData> Payload, TCursor? LastSeen)
     where TCursor : struct
 {
-    public static CursorPagedData<TData, TCursor> CreateEmpty() => new()
-    {
-        Payload = Array.Empty<TData>(),
-        NextCursor = null,
-        PreviousCursor = null
-    };
+    public bool HasMore => LastSeen != null;
+    public static CursorPagedData<TData, TCursor> CreateEmpty() => new(Array.Empty<TData>(), null);
 
-    public required ICollection<TData> Payload { get; init; }
-    public required TCursor? NextCursor { get; init; }
-    public required TCursor? PreviousCursor { get; init; }
-    public bool HasNext => NextCursor != null;
-    public bool HasPrevious => PreviousCursor != null;
+    public void Deconstruct(out ICollection<TData> payload, out TCursor? lastSeen, out bool hasMore)
+    {
+        payload = Payload;
+        lastSeen = LastSeen;
+        hasMore = HasMore;
+    }
 }
 
-public record CursorPagedData<TData>
+public record CursorPagedData<TData>(ICollection<TData> Payload, string? LastSeen)
 {
-    public static CursorPagedData<TData> CreateEmpty() => new()
-    {
-        Payload = Array.Empty<TData>(),
-        NextCursor = null,
-        PreviousCursor = null,
-        IsEncoded = false
-    };
+    public bool HasMore => !string.IsNullOrEmpty(LastSeen);
+    public static CursorPagedData<TData> CreateEmpty() => new(Array.Empty<TData>(), null);
 
-    public required ICollection<TData> Payload { get; init; }
-    public required string? NextCursor { get; init; }
-    public required string? PreviousCursor { get; init; }
-    public required bool IsEncoded { get; init; }
-    public bool HasNext => PreviousCursor != null;
+    public void Deconstruct(out ICollection<TData> payload, out string? lastSeen, out bool hasMore)
+    {
+        payload = Payload;
+        lastSeen = LastSeen;
+        hasMore = HasMore;
+    }
 }

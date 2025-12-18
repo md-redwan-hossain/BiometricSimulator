@@ -20,8 +20,9 @@ public class ActivityController : ControllerBase
     }
 
     [HttpGet("pending")]
-    public async Task<IActionResult> GetUnprocessedActivities([FromQuery, BindRequired] bool forward,
-        [FromQuery] int? cursor, [FromQuery, BindRequired, Range(1, int.MaxValue)] int limit)
+    public async Task<IActionResult> GetUnprocessedActivities([FromQuery] int? cursor,
+        [FromQuery, BindRequired, Range(1, int.MaxValue)]
+        int limit)
     {
         var query = from activityLog in _context.ActivityLogs
             join employee in _context.Employees
@@ -33,17 +34,13 @@ public class ActivityController : ControllerBase
                 Timestamp = activityLog.Timestamp,
                 Id = activityLog.Id
             };
-
+        
         if (cursor is not null)
         {
-            query = forward
-                ? query.Where(x => x.Id > cursor)
-                : query.Where(x => x.Id < cursor);
+            query = query.Where(x => x.Id < cursor);
         }
 
-        query = forward
-            ? query.OrderBy(x => x.Id)
-            : query.OrderByDescending(x => x.Id);
+        query = query.OrderByDescending(x => x.Id);
 
         var data = await query.Take(limit + 1).ToListAsync();
 
@@ -54,12 +51,7 @@ public class ActivityController : ControllerBase
             data.RemoveAt(data.Count - 1);
         }
 
-        return Ok(new CursorPagedData<UnprocessedActivityDto, int>
-        {
-            Payload = data,
-            NextCursor = hasMore ? data[^1].Id : null,
-            PreviousCursor = cursor is not null && data.Any() ? data[0].Id : null
-        });
+        return Ok(new CursorPagedData<UnprocessedActivityDto, int>(data, hasMore ? data[^1].Id : null));
     }
 
     [HttpPost("mark-as-processed")]

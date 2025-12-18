@@ -8,7 +8,7 @@
       <div class="card shadow-lg border-0">
         <div class="card-header bg-gradient text-center py-4"
              style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-          <h2 class="mb-0 fw-bold text-white">
+          <h2 class="mb-0 fw-bold">
             <i class="bi bi-clock-history me-2"></i>Pending Activities
           </h2>
         </div>
@@ -17,15 +17,13 @@
             <a asp-action="BioPunchSimulate" class="btn btn-outline-secondary">
               <i class="bi bi-arrow-left me-2"></i>Back to Punch
             </a>
-            <div class="d-flex gap-2">
-              <button id="prevBtn" class="btn btn-primary" disabled>
-                Previous
-              </button>
-              <button id="nextBtn" class="btn btn-primary" disabled>
-                Next
+            <div class="d-flex gap-2 align-items-center">
+
+              <button id="nextBtn" class="btn btn-secondary" disabled>
+                Next<i class="bi bi-chevron-right ms-1"></i>
               </button>
               <button id="refreshBtn" class="btn btn-primary">
-                Refresh
+                <i class="bi bi-arrow-clockwise me-2"></i>Refresh
               </button>
             </div>
           </div>
@@ -42,11 +40,9 @@
 
   <script>
     $(document).ready(function () {
-      let isForward = true;
-      const pageSize = 5;
+      const pageSize = 100;
       let lastResponse = null;
       let cursor = null;
-      const prevBtn = document.getElementById('prevBtn');
       const nextBtn = document.getElementById('nextBtn');
       const refreshBtn = document.getElementById('refreshBtn');
 
@@ -55,16 +51,38 @@
         layout: "fitColumns",
         columns: [
           {
+            title: "ID",
+            field: "id",
+            width: 100,
+            hozAlign: "center",
+            headerHozAlign: "center"
+          },
+          {
             title: "Proxy Code",
             field: "proxyCode",
             hozAlign: "left",
             headerHozAlign: "center"
           },
           {
-            title: "Timestamp",
+            title: "UTC Timestamp",
             field: "timestamp",
             hozAlign: "center",
             headerHozAlign: "center",
+            formatter: function (cell) {
+              const value = cell.getValue();
+              if (value) {
+                const date = new Date(value);
+                return date.toLocaleString('en-US', {
+                  year: 'numeric',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                  hour12: true
+                });
+              }
+              return '';
+            }
           },
         ],
         placeholder: "No Pending Activities",
@@ -73,7 +91,6 @@
         ajaxConfig: "GET",
         ajaxParams: function () {
           const p = {
-            forward: isForward,
             limit: pageSize
           };
 
@@ -87,26 +104,18 @@
         },
         ajaxResponse: function (url, params, response) {
           lastResponse = response;
-          debugger
-          nextBtn.enabled = lastResponse?.hasNext ?? false;
-          prevBtn.enabled = lastResponse?.hasPrevious ?? false;
+          nextBtn.disabled = !(response?.hasMore ?? false);
           return response?.payload ?? [];
         },
       });
-
-
+      
       nextBtn.addEventListener('click', function () {
-        cursor = lastResponse?.nextCursor ?? null;
-        table.setData();
-      });
-
-
-      prevBtn.addEventListener('click', function () {
-        cursor = lastResponse?.previousCursor ?? null;
+        cursor = lastResponse?.hasMore ?? null;
         table.setData();
       });
 
       refreshBtn.addEventListener('click', function () {
+        cursor = null; // Reset to first page
         table.setData();
       });
 
