@@ -20,10 +20,8 @@ public class ActivityController : ControllerBase
     }
 
     [HttpGet("pending")]
-    public async Task<IActionResult> GetUnprocessedActivities(
-        [FromQuery, BindRequired] bool forward, [FromQuery] int? cursor,
-        [FromQuery, BindRequired, Range(1, int.MaxValue)]
-        int limit)
+    public async Task<IActionResult> GetUnprocessedActivities([FromQuery, BindRequired] bool forward,
+        [FromQuery] int? cursor, [FromQuery, BindRequired, Range(1, int.MaxValue)] int limit)
     {
         var query = from activityLog in _context.ActivityLogs
             join employee in _context.Employees
@@ -36,29 +34,18 @@ public class ActivityController : ControllerBase
                 Id = activityLog.Id
             };
 
-        if (forward)
+        if (cursor is not null)
         {
-            query = query.OrderBy(x => x.Id);
-
-            if (cursor.HasValue)
-            {
-                query = query.Where(x => x.Id > cursor.Value);
-            }
-        }
-        
-        else
-        {
-            query = query.OrderByDescending(x => x.Id);
-
-            if (cursor.HasValue)
-            {
-                query = query.Where(x => x.Id < cursor.Value);
-            }
+            query = forward
+                ? query.Where(x => x.Id > cursor)
+                : query.Where(x => x.Id < cursor);
         }
 
-        var data = await query
-            .Take(limit + 1)
-            .ToListAsync();
+        query = forward
+            ? query.OrderBy(x => x.Id)
+            : query.OrderByDescending(x => x.Id);
+
+        var data = await query.Take(limit + 1).ToListAsync();
 
         var hasMore = data.Count > limit;
 
@@ -71,7 +58,7 @@ public class ActivityController : ControllerBase
         {
             Payload = data,
             NextCursor = hasMore ? data[^1].Id : null,
-            PreviousCursor = data.Any() ? data[0].Id : null
+            PreviousCursor = cursor is not null && data.Any() ? data[0].Id : null
         });
     }
 
