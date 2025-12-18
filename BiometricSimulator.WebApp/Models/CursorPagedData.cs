@@ -4,7 +4,7 @@ public record CursorPagedData<TData, TCursor>(ICollection<TData> Payload, TCurso
     where TCursor : struct
 {
     public bool HasMore => LastSeen != null;
-    public static CursorPagedData<TData, TCursor> CreateEmpty() => new(Array.Empty<TData>(), null);
+    public static CursorPagedData<TData, TCursor> CreateEmpty() => new([], null);
 
     public void Deconstruct(out ICollection<TData> payload, out TCursor? lastSeen, out bool hasMore)
     {
@@ -17,7 +17,7 @@ public record CursorPagedData<TData, TCursor>(ICollection<TData> Payload, TCurso
 public record CursorPagedData<TData>(ICollection<TData> Payload, string? LastSeen)
 {
     public bool HasMore => !string.IsNullOrEmpty(LastSeen);
-    public static CursorPagedData<TData> CreateEmpty() => new(Array.Empty<TData>(), null);
+    public static CursorPagedData<TData> CreateEmpty() => new([], null);
 
     public void Deconstruct(out ICollection<TData> payload, out string? lastSeen, out bool hasMore)
     {
