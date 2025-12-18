@@ -97,17 +97,17 @@
 
       nextBtn.addEventListener('click', function () {
         cursor = lastResponse?.nextCursor ?? null;
-        table.replaceData();
+        table.setData();
       });
 
 
       prevBtn.addEventListener('click', function () {
         cursor = lastResponse?.previousCursor ?? null;
-        table.replaceData();
+        table.setData();
       });
 
       refreshBtn.addEventListener('click', function () {
-        table.replaceData();
+        table.setData();
       });
 
     });
