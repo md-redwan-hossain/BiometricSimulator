@@ -1,3 +1,4 @@
+using BiometricSimulator.WebApp.Models;
 using BiometricSimulator.WebApp.Persistence;
 using Microsoft.EntityFrameworkCore;
 
