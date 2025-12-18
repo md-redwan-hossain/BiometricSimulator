@@ -13,6 +13,8 @@ riderModule.iml
 **/*.user
 **/Logs/*
 **/.idea
+**/.fuse_hidden*
+**/*.db
 
 #vscode
 .vscode
