@@ -15,7 +15,7 @@ public class ApplicationDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
+        
         // Configure Employee entity
         modelBuilder.Entity<Employee>(entity =>
         {
